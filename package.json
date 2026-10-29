@@ -25,14 +25,13 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./web-fetch-http/lib/index.js",
   "exports": {
-    ".": "./web-fetch-http/lib/index.js",
+    "./web-*": "./web-*/lib/index.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
-    "web-fetch-http/lib",
+    "web-*/lib",
     "cordis.patch.yml",
     "README.md"
   ],

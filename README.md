@@ -41,4 +41,19 @@ if (translatedIpv4 !== undefined && !isPublicIpAddress(translatedIpv4)) {
 
 ## 构建
 
-`npm install && npm run build`（esbuild 生成 `web-fetch-http/lib/index.js`，DSH 加载的是这个 JS）。
+`npm install && npm run build`（esbuild 自动发现所有 `web-*/src/index.ts`，逐个生成 `web-*/lib/index.js`，DSH 加载的就是这些 JS）。
+
+## 结构 / 扩展
+
+一个仓库 = 一个 bundle，可包含多个被修补的包：每个 `web-*` 目录是一个官方 `packages/web/*` 的原样副本（只改必要几行），产物是 `web-*/lib/index.js`；`package.json` 用 `exports: { "./web-*": "./web-*/lib/index.js" }` 暴露子路径，`cordis.patch.yml` 里每个包一行 `insert`。
+
+**以后再加一个 web 包，只有两步：**
+1. 把官方 `packages/web/<name>` 原样复制成 `<name>/`，做你那几行改动；
+2. 在 `cordis.patch.yml` 的 `insert` 里加一行：
+   ```yaml
+   - id: <行 id>
+     name: dsh-web-fetch-fix/<name>
+   ```
+   若该包需要改 `web.*` 的选型（如 searchProvider），把字段并入**同一个** `- id: web` 的 config（不要新开第二个 `- id: web`，会被整体覆盖）。
+   之后 `npm run build` 即可，`package.json` 不用改。
+

@@ -1,25 +1,28 @@
-# dsh-web-fetch-fix — bundle patch layer.
+# dsh-web-fetch-fix — bundle patch layer (one bundle, can ship many patched web packages).
 #
-# The plugin code is a drop-in copy of the official @deepseek-ai/dsh-web-fetch-http
-# (tag dsh-v0.2.1-rc.3, see ../web-fetch-http/) whose only behavioural change is
-# that the public-IP (SSRF) address gate is removed. That gate rejects reserved
-# addresses such as 198.18.0.0/15 that a local Clash/VPN TUN in fake-ip mode hands
+# Each patched package lives in its own `web-*` directory and is built to
+# `web-*/lib/index.js`; see scripts/build.mjs. Each one is registered with its
+# own `- insert` row whose `name` is the package subpath, e.g.
+# `dsh-web-fetch-fix/web-fetch-http` (resolved through package.json exports "./web-*").
+#
+# ---- web-fetch-http -------------------------------------------------------
+# Drop-in copy of official @deepseek-ai/dsh-web-fetch-http (tag dsh-v0.2.1-rc.3)
+# with only the public-IP (SSRF) gate removed — that gate rejects reserved
+# addresses like 198.18.0.0/15 which a local Clash/VPN TUN in fake-ip mode hands
 # out for perfectly public hostnames.
-#
-# 1) Select the patched provider for web_fetch. An id-targeted patch REPLACES the
-#    matched entry's whole `config`, so the base default `searchProvider`
-#    (`deepseek-official`) is restated verbatim to leave web_search unchanged.
-#    To tune the provider, append its own fields here, e.g.
-#        maxBodyChars: 200000
-#        timeoutMs: 30000
+
+# IMPORTANT: keep exactly ONE `- id: web` patch. An id-targeted patch replaces the
+# whole entry config, so all provider selections must be stated together here;
+# two separate `- id: web` patches would clobber each other. When you add another
+# patched web package that needs a different web.* provider, add its field here.
 - id: web
   name: '@deepseek-ai/dsh-web'
   config:
     searchProvider: deepseek-official
     fetchProvider: web-fetch-fix
 
-# 2) Register the patched provider. It registers under id `web-fetch-fix`
-#    (see src/provider.ts) so it coexists with the stock `http` provider.
+# Register the patched fetch provider (provider id `web-fetch-fix`, see
+# web-fetch-http/src/provider.ts). Add further packages as further insert rows.
 - insert:
     - id: web-fetch-fix
-      name: dsh-web-fetch-fix
+      name: dsh-web-fetch-fix/web-fetch-http
