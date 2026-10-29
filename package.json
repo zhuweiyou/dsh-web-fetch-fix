@@ -31,7 +31,7 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "web-*/lib",
+    "web-*/lib/**",
     "cordis.patch.yml",
     "README.md"
   ],
