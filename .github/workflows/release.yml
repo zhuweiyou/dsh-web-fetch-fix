@@ -1,0 +1,89 @@
+name: Release
+
+# 只允许“手动填表”触发；推送到 main 不会触发发布。
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号，格式 vX.Y.Z（例：v0.1.1）"
+        required: true
+        type: string
+      description:
+        description: "Release 说明（会作为 GitHub Release 正文）"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! printf '%s' "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::version 必须形如 vX.Y.Z，收到：$VERSION"
+            exit 1
+          fi
+          TAG="$VERSION"
+          SEMVER="${VERSION#v}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "SEMVER=$SEMVER" >> "$GITHUB_ENV"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::tag $TAG 已存在"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set package version and build
+        run: |
+          npm version "$SEMVER" --no-git-tag-version --allow-same-version
+          npm run build
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore(release): $TAG"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      - name: Create and push tag
+        run: |
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ inputs.description }}
+        run: |
+          gh release create "$TAG" --title "$TAG" --notes "$NOTES"
+
+      - name: Publish to npm
+        env:
+          # NPM_TOKEN 是仓库的 Actions Secret；注入成 NODE_AUTH_TOKEN 供 npm 读取。
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public

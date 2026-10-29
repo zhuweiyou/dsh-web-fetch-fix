@@ -1,0 +1,60 @@
+{
+  "name": "dsh-web-fetch-fix",
+  "version": "0.1.0",
+  "description": "Drop-in replacement for @deepseek-ai/dsh-web-fetch-http that removes the public-IP (SSRF) gate, so web_fetch works behind a local VPN/TUN fake-ip resolver (Clash etc.).",
+  "type": "module",
+  "main": "./web-fetch-http/lib/index.js",
+  "exports": {
+    ".": "./web-fetch-http/lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "web-fetch-http/lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "engines": {
+      "dsh": ">=0.2.1-rc.1 <0.3.0"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-http-proxy": ">=0.2.1-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-timeout": ">=0.2.1-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-web": ">=0.2.1-rc.1 <0.3.0",
+    "@deepseek-ai/schemastery": "^3.18.5",
+    "ipaddr.js": "^2.5.0",
+    "undici": "^8.11.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-web": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-timeout": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-http-proxy": {
+      "optional": true
+    },
+    "ipaddr.js": {
+      "optional": true
+    },
+    "undici": {
+      "optional": true
+    }
+  }
+}
