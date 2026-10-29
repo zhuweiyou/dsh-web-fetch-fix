@@ -1,6 +1,6 @@
 {
   "name": "dsh-web-fetch-fix",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drop-in replacement for @deepseek-ai/dsh-web-fetch-http that removes the public-IP (SSRF) gate, so web_fetch works behind a local VPN/TUN fake-ip resolver (Clash etc.).",
   "author": "zhuweiyou <i@zhuweiyou.com> (https://github.com/zhuweiyou)",
   "keywords": [
